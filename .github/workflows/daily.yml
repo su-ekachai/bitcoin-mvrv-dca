@@ -1,0 +1,27 @@
+name: daily-signal
+on:
+  schedule:
+    - cron: "43 0 * * *" # 07:43 Asia/Bangkok; odd minute avoids GitHub's on-the-hour congestion
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  signal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.14"
+      - name: Run monitor
+        run: uv run python dca_monitor.py
+        env:
+          BASE_AMOUNT: ${{ vars.BASE_AMOUNT }}
+          CURRENCY: ${{ vars.CURRENCY }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SHEETS_WEBHOOK_URL: ${{ secrets.SHEETS_WEBHOOK_URL }}
