@@ -14,8 +14,6 @@ MD = MarketData(
 
 def test_main_happy_path(monkeypatch):
     captured = {}
-    monkeypatch.setenv("BASE_AMOUNT", "20")
-    monkeypatch.setenv("CURRENCY", "USD")
     monkeypatch.setattr(dca_monitor, "fetch_indicators", lambda: MD)
 
     def fake_notify(env, discord_payload, telegram_text, row):
@@ -26,10 +24,10 @@ def test_main_happy_path(monkeypatch):
     monkeypatch.setattr(dca_monitor, "notify_all", fake_notify)
     assert main() == 0
     # 1.27 -> cheap x1.5 (tier changed from normal at 1.55); 0.98 -> x1.25
-    assert captured["row"]["amount"] == 37.5
+    assert captured["row"]["multiplier"] == 1.875
     assert captured["row"]["tier"] == "BUY MORE"
     title = captured["discord"]["embeds"][0]["title"]
-    assert title == "BUY MORE — 37.50 USD today (1.88× base)"
+    assert title == "BUY MORE — 1.88× your usual DCA"
     assert captured["discord"]["embeds"][0]["fields"][2]["value"] == "from DCA NORMAL"
 
 
@@ -61,18 +59,3 @@ def test_main_error_alert_failure_still_exits_1(monkeypatch):
 
     monkeypatch.setattr(dca_monitor, "notify_all", also_dead)
     assert main() == 1
-
-
-def test_main_tolerates_empty_env_vars(monkeypatch):
-    captured = {}
-    monkeypatch.setenv("BASE_AMOUNT", "")
-    monkeypatch.setenv("CURRENCY", "")
-    monkeypatch.setattr(dca_monitor, "fetch_indicators", lambda: MD)
-
-    def fake_notify(env, discord_payload, telegram_text, row):
-        captured["row"] = row
-        return ["discord"]
-
-    monkeypatch.setattr(dca_monitor, "notify_all", fake_notify)
-    assert main() == 0
-    assert captured["row"]["amount"] == 18.75  # base 10 x 1.875

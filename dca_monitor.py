@@ -97,9 +97,6 @@ def _series(raw: list[dict], key: str) -> list[float]:
 class Context:
     data_date: str
     price: float
-    base_amount: float
-    currency: str
-    amount: float
     mvrv_percentile: float
     tier_changed: bool
     prev_tier: str
@@ -115,11 +112,11 @@ def _sth_zone(sth: float) -> str:
     return "caution"
 
 
-def _headline(signal: Signal, ctx: Context) -> str:
+def _headline(signal: Signal) -> str:
     label = TIER_LABELS[signal.mvrv_tier]
     if signal.stop:
-        return f"{label} — no buy today (0× base)"
-    return f"{label} — {ctx.amount:,.2f} {ctx.currency} today ({signal.multiplier:.2f}× base)"
+        return f"{label} — pause DCA today (0×)"
+    return f"{label} — {signal.multiplier:.2f}× your usual DCA"
 
 
 def _reasons(signal: Signal) -> str:
@@ -135,7 +132,7 @@ def build_discord(signal: Signal, ctx: Context) -> dict:
     return {
         "embeds": [
             {
-                "title": _headline(signal, ctx),
+                "title": _headline(signal),
                 "description": _reasons(signal),
                 "color": TIER_COLORS[signal.mvrv_tier],
                 "fields": [
@@ -156,12 +153,9 @@ def build_discord(signal: Signal, ctx: Context) -> dict:
 def build_telegram(signal: Signal, ctx: Context) -> str:
     label = TIER_LABELS[signal.mvrv_tier]
     if signal.stop:
-        head = f"<b>{label} — no buy today</b> (0× base)"
+        head = f"<b>{label} — pause DCA today</b> (0×)"
     else:
-        head = (
-            f"<b>{label} — {ctx.amount:,.2f} {ctx.currency} today</b>"
-            f" ({signal.multiplier:.2f}× base)"
-        )
+        head = f"<b>{label} — {signal.multiplier:.2f}× your usual DCA</b>"
     mvrv_zone = MVRV_ZONE[signal.mvrv_tier]
     sth_zone = _sth_zone(signal.sth_mvrv)
     lines = [
@@ -206,7 +200,6 @@ def sheet_row(signal: Signal, ctx: Context) -> dict:
         "sth_mvrv": signal.sth_mvrv,
         "tier": TIER_LABELS[signal.mvrv_tier],
         "multiplier": signal.multiplier,
-        "amount": ctx.amount,
     }
 
 
@@ -333,8 +326,6 @@ def main() -> int:
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     env = os.environ
-    base = float(env.get("BASE_AMOUNT") or "10")
-    currency = env.get("CURRENCY") or "USD"
     t0 = time.monotonic()
 
     try:
@@ -353,9 +344,6 @@ def main() -> int:
     ctx = Context(
         data_date=data.data_date,
         price=data.price,
-        base_amount=base,
-        currency=currency,
-        amount=round(base * signal.multiplier, 2),
         mvrv_percentile=percentile(data.mvrv_history, data.mvrv),
         tier_changed=prev.mvrv_tier != signal.mvrv_tier,
         prev_tier=TIER_LABELS[prev.mvrv_tier],
@@ -377,9 +365,9 @@ def main() -> int:
         return 1
 
     log.info(
-        "run complete: tier=%s amount=%.2f channels=%s duration=%.1fs",
+        "run complete: tier=%s multiplier=%.3f channels=%s duration=%.1fs",
         signal.mvrv_tier,
-        ctx.amount,
+        signal.multiplier,
         ",".join(sent) or "none",
         time.monotonic() - t0,
     )

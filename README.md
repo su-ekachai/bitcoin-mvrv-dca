@@ -2,15 +2,16 @@
 
 Daily job that reads Bitcoin's Market Value to Realized Value (MVRV) and
 Short-Term Holder MVRV (STH-MVRV) on-chain ratios, classifies a dollar-cost
-averaging (DCA) tier, and computes today's recommended buy amount. It pushes
-an alert to Discord and/or Telegram and appends the day's signal to a Google
-Sheet — it never places trades itself. Source data lags realtime by one to
-two days; each alert shows the data date it was computed from.
+averaging (DCA) tier, and recommends a multiplier to apply to whatever base
+amount the reader normally buys. It pushes an alert to Discord and/or
+Telegram and appends the day's signal to a Google Sheet — it never computes
+absolute amounts and never places trades. Source data lags realtime by one
+to two days; each alert shows the data date it was computed from.
 
 Indicator definitions and tier rationale: [docs/strategy.md](docs/strategy.md).
 Full validation evidence: [docs/backtest-results.md](docs/backtest-results.md).
 
-Amount = `BASE_AMOUNT × mvrv_mult × sth_mult`, computed daily:
+Daily guidance = `mvrv_mult × sth_mult`, a multiplier on the usual DCA buy:
 
 | MVRV | Zone | mvrv_mult |
 |---|---|---|
@@ -53,15 +54,11 @@ the strategy under test is exactly the strategy that runs daily):
    - `TELEGRAM_BOT_TOKEN`
    - `TELEGRAM_CHAT_ID`
    - `SHEETS_WEBHOOK_URL`
-3. Optionally add these **repository variables** (`Variables` tab, same
-   page) to override the defaults (`BASE_AMOUNT=10`, `CURRENCY=USD`):
-   - `BASE_AMOUNT`
-   - `CURRENCY`
-4. `.github/workflows/daily.yml` runs on a `43 0 * * *` cron (07:43
+3. `.github/workflows/daily.yml` runs on a `43 0 * * *` cron (07:43
    Asia/Bangkok; the odd minute dodges GitHub's on-the-hour scheduling
    congestion) and can also be triggered manually via
    **Actions → daily-signal → Run workflow** (`workflow_dispatch`).
-5. `.github/workflows/ci.yml` runs `ruff format --check`, `ruff check`, `ty
+4. `.github/workflows/ci.yml` runs `ruff format --check`, `ruff check`, `ty
    check`, and `pytest` on every push and pull request.
 
 Configure only the channels needed — any unset secret is skipped at runtime
@@ -91,7 +88,7 @@ with an INFO log line (see `dca_monitor.py`).
    **Anyone**. Deploy and authorize.
 4. Copy the deployment URL — this is `SHEETS_WEBHOOK_URL`. The script
    creates (or reuses) a `signals` sheet and appends one row per run:
-   `date, price, mvrv, sth_mvrv, tier, multiplier, amount`.
+   `date, price, mvrv, sth_mvrv, tier, multiplier`.
 
 ## Raspberry Pi
 
