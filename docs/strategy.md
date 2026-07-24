@@ -29,7 +29,9 @@ scales the amount by cycle position.
 
 ## The rules
 
-Daily buy amount = `BASE_AMOUNT × mvrv_mult × sth_mult`.
+Daily guidance = `mvrv_mult × sth_mult`, a multiplier on whatever base amount
+the reader normally DCAs. The monitor recommends the multiplier only; the
+base amount and the order stay with the reader.
 
 MVRV sets the macro tier:
 

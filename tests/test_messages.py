@@ -11,9 +11,6 @@ from dca_monitor import (
 CTX = Context(
     data_date="2026-07-21",
     price=66403.0,
-    base_amount=10.0,
-    currency="USD",
-    amount=18.75,
     mvrv_percentile=18.0,
     tier_changed=False,
     prev_tier="BUY MORE",
@@ -21,9 +18,9 @@ CTX = Context(
 SIG = classify(1.27, 0.98)
 
 
-def test_discord_headline_leads_with_decision():
+def test_discord_headline_leads_with_guidance():
     embed = build_discord(SIG, CTX)["embeds"][0]
-    assert embed["title"] == "BUY MORE — 18.75 USD today (1.88× base)"
+    assert embed["title"] == "BUY MORE — 1.88× your usual DCA"
     assert embed["color"] == 0x2ECC71
 
 
@@ -46,9 +43,6 @@ def test_discord_tier_change_shown():
     ctx = Context(
         data_date=CTX.data_date,
         price=CTX.price,
-        base_amount=CTX.base_amount,
-        currency=CTX.currency,
-        amount=CTX.amount,
         mvrv_percentile=CTX.mvrv_percentile,
         tier_changed=True,
         prev_tier="DCA NORMAL",
@@ -59,18 +53,8 @@ def test_discord_tier_change_shown():
 
 def test_discord_stop_tier():
     sig = classify(2.7, 1.2)
-    ctx = Context(
-        data_date=CTX.data_date,
-        price=CTX.price,
-        base_amount=CTX.base_amount,
-        currency=CTX.currency,
-        amount=0.0,
-        mvrv_percentile=CTX.mvrv_percentile,
-        tier_changed=CTX.tier_changed,
-        prev_tier=CTX.prev_tier,
-    )
-    embed = build_discord(sig, ctx)["embeds"][0]
-    assert embed["title"] == "STOP — no buy today (0× base)"
+    embed = build_discord(sig, CTX)["embeds"][0]
+    assert embed["title"] == "STOP — pause DCA today (0×)"
     assert embed["color"] == 0xE74C3C
 
 
@@ -83,20 +67,22 @@ def test_discord_limits():
 
 def test_telegram_structure():
     text = build_telegram(SIG, CTX)
-    assert text.startswith("<b>BUY MORE — 18.75 USD today</b> (1.88× base)")
+    assert text.startswith("<b>BUY MORE — 1.88× your usual DCA</b>")
     assert "<code>1.27</code>" in text and "<code>0.98</code>" in text
     assert "<i>Data 2026-07-21 · bitcoin-data.com</i>" in text
     assert "Tier change" not in text
     assert len(text) <= 4096
 
 
+def test_telegram_stop_tier():
+    sig = classify(2.7, 1.2)
+    assert build_telegram(sig, CTX).startswith("<b>STOP — pause DCA today</b> (0×)")
+
+
 def test_telegram_tier_change_line():
     ctx = Context(
         data_date=CTX.data_date,
         price=CTX.price,
-        base_amount=CTX.base_amount,
-        currency=CTX.currency,
-        amount=CTX.amount,
         mvrv_percentile=CTX.mvrv_percentile,
         tier_changed=True,
         prev_tier="DCA NORMAL",
@@ -138,5 +124,4 @@ def test_sheet_row():
         "sth_mvrv": 0.98,
         "tier": "BUY MORE",
         "multiplier": 1.875,
-        "amount": 18.75,
     }
