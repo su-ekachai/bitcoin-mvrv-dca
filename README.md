@@ -4,7 +4,7 @@ Daily job that reads Bitcoin's Market Value to Realized Value (MVRV) and
 Short-Term Holder MVRV (STH-MVRV) on-chain ratios, classifies a dollar-cost
 averaging (DCA) tier, and recommends a multiplier to apply to whatever base
 amount the reader normally buys. It pushes an alert to Discord and/or
-Telegram and appends the day's signal to a Google Sheet — it never computes
+Telegram and appends the day's signal to a Google Sheet. It never computes
 absolute amounts and never places trades. Source data lags realtime by one
 to two days; each alert shows the data date it was computed from.
 
@@ -32,7 +32,7 @@ Daily guidance = `mvrv_mult × sth_mult`, a multiplier on the usual DCA buy:
 
 Backtested against 2013–2026 daily data (`backtest.py` re-runs this against
 the live API's history — it imports `classify()` from `dca_monitor.py`, so
-the strategy under test is exactly the strategy that runs daily):
+the strategy under test is exactly the strategy that runs daily.
 
 - Combined MVRV × STH-MVRV strategy beat uniform DCA on average cost basis by
   +29% (2018–21) and +20% (2022–26).
