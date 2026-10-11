@@ -26,7 +26,7 @@ jobs:
           SHEETS_WEBHOOK_URL: ${{ secrets.SHEETS_WEBHOOK_URL }}
       - name: Keepalive
         if: always()
-        run: gh workflow enable daily-signal
+        run: gh workflow enable daily.yml # by filename: name lookup only matches disabled workflows
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
