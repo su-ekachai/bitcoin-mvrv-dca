@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: read
+  actions: write
 
 jobs:
   signal:
@@ -23,3 +24,9 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           SHEETS_WEBHOOK_URL: ${{ secrets.SHEETS_WEBHOOK_URL }}
+      - name: Keepalive
+        if: always()
+        run: gh workflow enable daily-signal
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
